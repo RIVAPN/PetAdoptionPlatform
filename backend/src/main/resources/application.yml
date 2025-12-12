@@ -1,0 +1,21 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/pet_adoption
+    username: petuser
+    password: petpass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none        # vamos deixar o schema a cargo do Flyway
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true          # opcional, só pra logar os SQLs
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
