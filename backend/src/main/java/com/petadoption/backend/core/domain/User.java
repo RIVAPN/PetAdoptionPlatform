@@ -62,6 +62,11 @@ public class User {
         return id;
     }
 
+    // Setter usado principalmente em testes
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }

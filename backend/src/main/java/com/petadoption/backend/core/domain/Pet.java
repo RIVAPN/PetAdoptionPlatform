@@ -67,6 +67,11 @@ public class Pet {
         return id;
     }
 
+    // Setter usado principalmente em testes
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
