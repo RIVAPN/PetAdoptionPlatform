@@ -5,20 +5,22 @@ import com.petadoption.backend.infrastructure.persistence.jpa.UserJpaRepository;
 import com.petadoption.backend.infrastructure.web.dto.CreateUserRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class UserService {
 
     private final UserJpaRepository userRepository;
     private final RoleJpaRepository roleRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserJpaRepository userRepository,
-                       RoleJpaRepository roleRepository) {
+                   RoleJpaRepository roleRepository,
+                   PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-    }
+        this.passwordEncoder = passwordEncoder;
+}
 
     @Transactional
     public User createUser(CreateUserRequest request) {

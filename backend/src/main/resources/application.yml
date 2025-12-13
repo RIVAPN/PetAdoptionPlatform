@@ -19,3 +19,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  
+  security:
+    jwt:
+      secret: "faFS@92#kawEF&ZXm*Jlf0qwP$Lmda.#0lpAmcasKNAV2$!"      
+      expire-hours: 4
+

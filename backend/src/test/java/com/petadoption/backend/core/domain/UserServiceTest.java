@@ -3,16 +3,20 @@ package com.petadoption.backend.core.domain;
 import com.petadoption.backend.infrastructure.persistence.jpa.RoleJpaRepository;
 import com.petadoption.backend.infrastructure.persistence.jpa.UserJpaRepository;
 import com.petadoption.backend.infrastructure.web.dto.CreateUserRequest;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +31,8 @@ class UserServiceTest {
     // vamos sobrescrever o passwordEncoder para não depender do real
     @InjectMocks
     private UserService userService;
+
+    private PasswordEncoder passwordEncoder;
 
     @Test
     void createUser_deveLancarExcecaoQuandoEmailJaExiste() {
@@ -83,5 +89,11 @@ class UserServiceTest {
         // sanity check: o hash bate com a senha usando o mesmo encoder
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         assertTrue(encoder.matches("senha123", created.getPasswordHash()));
+    }
+
+    @BeforeEach
+    void setUp() {
+        passwordEncoder = new BCryptPasswordEncoder();
+        userService = new UserService(userRepository, roleRepository, passwordEncoder);
     }
 }

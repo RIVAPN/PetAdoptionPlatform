@@ -1,5 +1,7 @@
 package com.petadoption.backend.infrastructure.web.dto;
 
+import com.petadoption.backend.core.domain.User;
+
 public class UserResponse {
 
     private Long id;
@@ -17,6 +19,16 @@ public class UserResponse {
         this.email = email;
         this.phone = phone;
         this.address = address;
+    }
+
+    public static UserResponse fromDomain(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhone(),
+                user.getAddress()
+        );
     }
 
     public Long getId() {
