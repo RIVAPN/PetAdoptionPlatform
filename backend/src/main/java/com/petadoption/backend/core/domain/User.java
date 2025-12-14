@@ -122,4 +122,9 @@ public class User {
     public void addRole(Role role) {
         this.roles.add(role);
     }
+
+    public boolean hasRole(String roleName) {
+        if (roles == null) return false;
+        return roles.stream().anyMatch(r -> roleName.equals(r.getName()));
+    }
 }

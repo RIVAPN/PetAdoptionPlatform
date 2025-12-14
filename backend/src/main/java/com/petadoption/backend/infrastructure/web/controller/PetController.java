@@ -7,6 +7,7 @@ import com.petadoption.backend.infrastructure.web.dto.CreatePetRequest;
 import com.petadoption.backend.infrastructure.web.dto.PetResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,8 +23,13 @@ public class PetController {
     }
 
     @PostMapping
-    public ResponseEntity<PetResponse> create(@RequestBody CreatePetRequest request) {
-        Pet pet = petService.createPet(request);
+    public ResponseEntity<PetResponse> create(@RequestBody CreatePetRequest request,
+                                              Authentication authentication) {
+
+        // e-mail (ou username) do usuário autenticado — vem do token JWT
+        String email = authentication.getName();
+
+        Pet pet = petService.createPet(request, email);
         PetResponse response = toResponse(pet);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

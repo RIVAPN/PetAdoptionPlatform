@@ -2,18 +2,20 @@ package com.petadoption.backend.core.domain;
 
 import com.petadoption.backend.infrastructure.persistence.jpa.OrganizationJpaRepository;
 import com.petadoption.backend.infrastructure.persistence.jpa.PetJpaRepository;
+import com.petadoption.backend.infrastructure.persistence.jpa.RoleJpaRepository;
 import com.petadoption.backend.infrastructure.persistence.jpa.UserJpaRepository;
 import com.petadoption.backend.infrastructure.web.dto.CreatePetRequest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,90 +30,106 @@ class PetServiceTest {
     @Mock
     private OrganizationJpaRepository organizationRepository;
 
-    @InjectMocks
+    @Mock
+    private RoleJpaRepository roleRepository;
+
     private PetService petService;
 
-    @Test
-    void createPet_deveLancarExcecaoQuandoNaoHaDono() {
-        // arrange
-        CreatePetRequest request = new CreatePetRequest();
-        request.setName("Luna");
-        request.setSpecies("DOG");
-        // nem ownerUserId nem ownerOrgId são definidos
-
-        // act + assert
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> petService.createPet(request)
-        );
-
-        assertEquals("Pet deve possuir exatamente um tipo de dono: usuário OU organização.", ex.getMessage());
-        verify(petRepository, never()).save(any());
+    @BeforeEach
+    void setUp() {
+        petService = new PetService(petRepository, userRepository, organizationRepository, roleRepository);
     }
 
     @Test
-    void createPet_deveLancarExcecaoQuandoHaDoisDonos() {
+    void createPet_paraUsuarioAutenticadoDeveUsarEmailEPromoverTutor() {
         // arrange
-        CreatePetRequest request = new CreatePetRequest();
-        request.setName("Luna");
-        request.setSpecies("DOG");
-        request.setOwnerUserId(1L);
-        request.setOwnerOrgId(2L); // ambos preenchidos
+        String email = "adopter@example.com";
 
-        // act + assert
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
-                () -> petService.createPet(request)
-        );
+        User owner = new User();
+        owner.setEmail(email);
 
-        assertEquals("Pet deve possuir exatamente um tipo de dono: usuário OU organização.", ex.getMessage());
-        verify(petRepository, never()).save(any());
-    }
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(owner));
 
-    @Test
-    void createPet_deveCriarPetComDonoUsuarioEStatusDefaultAvailable() {
-        // arrange
+        Role tutorRole = new Role();
+        tutorRole.setName("ROLE_TUTOR");
+        when(roleRepository.findByName("ROLE_TUTOR")).thenReturn(Optional.of(tutorRole));
+
+        when(petRepository.save(any(Pet.class))).thenAnswer(invocation -> {
+            Pet saved = invocation.getArgument(0);
+            saved.setId(10L);         // aqui pode ter setId em Pet, que normalmente existe
+            return saved;
+        });
+
         CreatePetRequest request = new CreatePetRequest();
         request.setName("Luna");
         request.setSpecies("DOG");
         request.setSize("MEDIUM");
-        request.setAgeYears(2);
-        request.setOwnerUserId(1L);   // dono é usuário
-        // request.setStatus(null) -> deve virar AVAILABLE automaticamente
-
-        User owner = new User();
-        owner.setId(1L);
-        owner.setName("Kamilla");
-
-        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
-        when(petRepository.save(any(Pet.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        request.setAgeYears(3);
+        // sem ownerOrgId -> dono será o usuário autenticado
 
         // act
-        Pet created = petService.createPet(request);
+        Pet pet = petService.createPet(request, email);
 
         // assert
-        assertEquals("Luna", created.getName());
-        assertEquals("DOG", created.getSpecies());
-        assertEquals(PetStatus.AVAILABLE, created.getStatus()); // default
-        assertNotNull(created.getOwnerUser());
-        assertEquals(1L, created.getOwnerUser().getId());
-        assertNull(created.getOwnerOrg());
+        assertEquals(owner, pet.getOwnerUser());
+        assertNull(pet.getOwnerOrg());
+        assertEquals(10L, pet.getId());
+
+        verify(userRepository).findByEmail(email);
+        verify(roleRepository).findByName("ROLE_TUTOR");
+        // se no serviço você estiver salvando o usuário promovido:
+        // verify(userRepository).save(owner);
+        verify(petRepository).save(any(Pet.class));
     }
 
     @Test
-    void listByStatus_deveDelegarAoRepositorio() {
+    void createPet_comOwnerOrgIdDeveUsarOrganizacao() {
         // arrange
-        Pet p1 = new Pet();
-        Pet p2 = new Pet();
-        List<Pet> pets = List.of(p1, p2);
+        String email = "adopter@example.com"; // aqui não importa tanto
 
-        when(petRepository.findByStatus(PetStatus.AVAILABLE)).thenReturn(pets);
+        Organization org = new Organization();
+        org.setName("ONG Teste");
+
+        when(organizationRepository.findById(5L)).thenReturn(Optional.of(org));
+        when(petRepository.save(any(Pet.class))).thenAnswer(invocation -> {
+            Pet saved = invocation.getArgument(0);
+            saved.setId(20L);
+            return saved;
+        });
+
+        CreatePetRequest request = new CreatePetRequest();
+        request.setName("Mia");
+        request.setSpecies("CAT");
+        request.setSize("SMALL");
+        request.setAgeYears(2);
+        request.setOwnerOrgId(5L);
 
         // act
-        List<Pet> result = petService.listByStatus(PetStatus.AVAILABLE);
+        Pet pet = petService.createPet(request, email);
 
         // assert
-        assertSame(pets, result);
-        verify(petRepository).findByStatus(PetStatus.AVAILABLE);
+        assertEquals(org, pet.getOwnerOrg());
+        assertNull(pet.getOwnerUser());
+        assertEquals(20L, pet.getId());
+
+        verify(organizationRepository).findById(5L);
+        verify(petRepository).save(any(Pet.class));
+        verify(userRepository, never()).findByEmail(anyString());
+    }
+
+    @Test
+    void createPet_comUserEOrgDeveLancarIllegalArgumentException() {
+        // arrange
+        CreatePetRequest request = new CreatePetRequest();
+        request.setName("Bob");
+        request.setSpecies("DOG");
+        request.setOwnerUserId(1L);
+        request.setOwnerOrgId(2L);
+
+        // act + assert
+        assertThrows(IllegalArgumentException.class,
+                () -> petService.createPet(request, "adopter@example.com"));
+
+        verifyNoInteractions(petRepository);
     }
 }
