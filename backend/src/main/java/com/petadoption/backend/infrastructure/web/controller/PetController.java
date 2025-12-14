@@ -7,7 +7,8 @@ import com.petadoption.backend.infrastructure.web.dto.CreatePetRequest;
 import com.petadoption.backend.infrastructure.web.dto.PetResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,19 +23,42 @@ public class PetController {
         this.petService = petService;
     }
 
+    // ------------ C R E A T E ------------
+
     @PostMapping
     public ResponseEntity<PetResponse> create(@RequestBody CreatePetRequest request,
-                                              Authentication authentication) {
-
-        // e-mail (ou username) do usuário autenticado — vem do token JWT
-        String email = authentication.getName();
-
-        Pet pet = petService.createPet(request, email);
+                                              @AuthenticationPrincipal UserDetails userDetails) {
+        String authenticatedEmail = userDetails.getUsername();
+        Pet pet = petService.createPet(request, authenticatedEmail);
         PetResponse response = toResponse(pet);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Lista somente por status (por padrão AVAILABLE)
+    // ------------ U P D A T E ------------
+
+    @PutMapping("/{id}")
+    public ResponseEntity<PetResponse> update(@PathVariable Long id,
+                                              @RequestBody CreatePetRequest request,
+                                              @AuthenticationPrincipal UserDetails userDetails) {
+        String authenticatedEmail = userDetails.getUsername();
+        Pet pet = petService.updatePet(id, request, authenticatedEmail);
+        PetResponse response = toResponse(pet);
+        return ResponseEntity.ok(response);
+    }
+
+    // ------------ D E L E T E ------------
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id,
+                                       @AuthenticationPrincipal UserDetails userDetails) {
+        String authenticatedEmail = userDetails.getUsername();
+        petService.deletePet(id, authenticatedEmail);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ------------ R E A D  ------------
+
+    // catálogo público (GET /api/pets?status=AVAILABLE)
     @GetMapping
     public List<PetResponse> list(@RequestParam(required = false) String status) {
         PetStatus st = (status == null || status.isBlank())
@@ -50,6 +74,8 @@ public class PetController {
     public PetResponse getById(@PathVariable Long id) {
         return toResponse(petService.getById(id));
     }
+
+    // ------------ M A P P E R ------------
 
     private PetResponse toResponse(Pet pet) {
         String ownerType;

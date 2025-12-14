@@ -38,18 +38,19 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/pets/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organizations/**").permitAll()
 
-                // REGRAS POR PAPEL
-
-                // apenas TUTOR ou ORG_ADMIN podem criar/alterar/excluir pets
+                // ===== REGRAS PARA PETS =====
+                // Qualquer usuário autenticado pode criar/alterar/excluir pets.
+                // O PetService é quem garante:
+                //   - só cria em nome de si mesmo
+                //   - só o dono pode atualizar/excluir o próprio pet
                 .requestMatchers(HttpMethod.POST, "/api/pets/**")
-                    .hasAnyRole("TUTOR", "ORG_ADMIN")
+                    .authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/pets/**")
-                    .hasAnyRole("TUTOR", "ORG_ADMIN")
+                    .authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/api/pets/**")
-                    .hasAnyRole("TUTOR", "ORG_ADMIN")
+                    .authenticated()
 
-                // (quando criarmos o endpoint de pedido de adoção)
-                // apenas ADOPTER poderá criar pedidos de adoção
+                // (futuro) – pedidos de adoção: só ADOPTER cria
                 .requestMatchers(HttpMethod.POST, "/api/adoptions/**")
                     .hasRole("ADOPTER")
 
@@ -57,7 +58,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // opcional: força 401 em vez de 403 quando não está autenticado
+            // quando NÃO autenticado -> 401 (e não 403)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
