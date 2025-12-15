@@ -192,4 +192,12 @@ public class PetService {
     public List<Pet> listByStatus(PetStatus status) {
         return petRepository.findByStatus(status);
     }
+
+    @Transactional(readOnly = true)
+    public List<Pet> listPetsOfAuthenticatedUser(String authenticatedEmail) {
+        User user = userRepository.findByEmail(authenticatedEmail)
+                        .orElseThrow(() -> new IllegalArgumentException("Usuário Auntenticado não encontrado."));
+
+        return petRepository.findByOwnerUserId(user.getId());
+    }
 }

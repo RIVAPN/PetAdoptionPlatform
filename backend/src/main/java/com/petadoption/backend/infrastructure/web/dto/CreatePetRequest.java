@@ -1,31 +1,53 @@
 package com.petadoption.backend.infrastructure.web.dto;
 
 import com.petadoption.backend.core.domain.PetStatus;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class CreatePetRequest {
 
+    @NotBlank(message = "Nome do pet é obrigatório")
+    @Size(max = 100, message = "Nome do pet deve ter no máximo 100 caracteres")
     private String name;
-    private String species;
-    private String breed;
-    private String sex;
-    private String size;
-    private Integer ageYears;
-    private PetStatus status;      // enviar "AVAILABLE", "ADOPTED", etc.
 
-    private Long ownerUserId;      // exatamente UM dos dois deve estar preenchido
-    private Long ownerOrgId;
+    @NotBlank(message = "Espécie é obrigatória (ex: DOG, CAT)")
+    @Size(max = 50, message = "Espécie deve ter no máximo 50 caracteres")
+    private String species;
+
+    @Size(max = 100, message = "Raça deve ter no máximo 100 caracteres")
+    private String breed;
+
+    @Size(max = 10, message = "Sexo deve ter no máximo 10 caracteres")
+    private String sex;
+
+    @NotBlank(message = "Tamanho é obrigatório (ex: SMALL, MEDIUM, LARGE)")
+    @Size(max = 20, message = "Tamanho deve ter no máximo 20 caracteres")
+    private String size;
+
+    @NotNull(message = "Idade (anos) é obrigatória")
+    @Min(value = 0, message = "Idade não pode ser negativa")
+    private Integer ageYears;
+
+    private PetStatus status;
 
     private Boolean hasSpecialNeeds;
     private Boolean hasContinuousTreatment;
     private Boolean hasChronicDisease;
+
+    @Size(max = 500, message = "Anotações de saúde devem ter no máximo 500 caracteres")
     private String healthNotes;
+
     private Boolean goodWithOtherAnimals;
     private Boolean requiresConstantCare;
 
+    // Dono explícito (opcionais, exatamente um ou nenhum – regra tratada no serviço)
+    private Long ownerUserId;
+    private Long ownerOrgId;
+
     public CreatePetRequest() {
     }
-
-    // getters e setters
 
     public String getName() {
         return name;
@@ -83,22 +105,6 @@ public class CreatePetRequest {
         this.status = status;
     }
 
-    public Long getOwnerUserId() {
-        return ownerUserId;
-    }
-
-    public void setOwnerUserId(Long ownerUserId) {
-        this.ownerUserId = ownerUserId;
-    }
-
-    public Long getOwnerOrgId() {
-        return ownerOrgId;
-    }
-
-    public void setOwnerOrgId(Long ownerOrgId) {
-        this.ownerOrgId = ownerOrgId;
-    }
-
     public Boolean getHasSpecialNeeds() {
         return hasSpecialNeeds;
     }
@@ -145,5 +151,21 @@ public class CreatePetRequest {
 
     public void setRequiresConstantCare(Boolean requiresConstantCare) {
         this.requiresConstantCare = requiresConstantCare;
+    }
+
+    public Long getOwnerUserId() {
+        return ownerUserId;
+    }
+
+    public void setOwnerUserId(Long ownerUserId) {
+        this.ownerUserId = ownerUserId;
+    }
+
+    public Long getOwnerOrgId() {
+        return ownerOrgId;
+    }
+
+    public void setOwnerOrgId(Long ownerOrgId) {
+        this.ownerOrgId = ownerOrgId;
     }
 }

@@ -3,9 +3,10 @@ package com.petadoption.backend.core.domain;
 import com.petadoption.backend.infrastructure.persistence.jpa.RoleJpaRepository;
 import com.petadoption.backend.infrastructure.persistence.jpa.UserJpaRepository;
 import com.petadoption.backend.infrastructure.web.dto.CreateUserRequest;
+import com.petadoption.backend.infrastructure.web.dto.UpdateUserRequest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class UserService {
@@ -15,13 +16,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public UserService(UserJpaRepository userRepository,
-                   RoleJpaRepository roleRepository,
-                   PasswordEncoder passwordEncoder) {
+                       RoleJpaRepository roleRepository,
+                       PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-}
+    }
 
+    // =========================
+    // CRIAÇÃO
+    // =========================
     @Transactional
     public User createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -44,9 +48,36 @@ public class UserService {
         return userRepository.save(user);
     }
 
-
+    // =========================
+    // BUSCAS
+    // =========================
     public User getById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+    }
+
+    public User getByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+    }
+
+    // =========================
+    // OPERAÇÕES DO PRÓPRIO USUÁRIO
+    // =========================
+    @Transactional
+    public User updateSelf(String email, UpdateUserRequest request) {
+        User user = getByEmail(email);
+
+        user.setName(request.getName());
+        user.setPhone(request.getPhone());
+        user.setAddress(request.getAddress());
+
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteSelf(String email) {
+        User user = getByEmail(email);
+        userRepository.delete(user);
     }
 }

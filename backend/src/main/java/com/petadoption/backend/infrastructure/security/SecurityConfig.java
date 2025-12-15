@@ -34,6 +34,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
+                // pets do usuario logado (precisa autenticar)
+                .requestMatchers(HttpMethod.GET, "/api/pets/me").authenticated()
+
                 // catálogo público (somente leitura)
                 .requestMatchers(HttpMethod.GET, "/api/pets/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organizations/**").permitAll()

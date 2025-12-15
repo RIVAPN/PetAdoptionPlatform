@@ -7,11 +7,15 @@ import com.petadoption.backend.infrastructure.web.dto.CreatePetRequest;
 import com.petadoption.backend.infrastructure.web.dto.PetResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/pets")
@@ -26,7 +30,7 @@ public class PetController {
     // ------------ C R E A T E ------------
 
     @PostMapping
-    public ResponseEntity<PetResponse> create(@RequestBody CreatePetRequest request,
+    public ResponseEntity<PetResponse> create(@Valid @RequestBody CreatePetRequest request,
                                               @AuthenticationPrincipal UserDetails userDetails) {
         String authenticatedEmail = userDetails.getUsername();
         Pet pet = petService.createPet(request, authenticatedEmail);
@@ -38,7 +42,7 @@ public class PetController {
 
     @PutMapping("/{id}")
     public ResponseEntity<PetResponse> update(@PathVariable Long id,
-                                              @RequestBody CreatePetRequest request,
+                                              @Valid @RequestBody CreatePetRequest request,
                                               @AuthenticationPrincipal UserDetails userDetails) {
         String authenticatedEmail = userDetails.getUsername();
         Pet pet = petService.updatePet(id, request, authenticatedEmail);
@@ -74,6 +78,15 @@ public class PetController {
     public PetResponse getById(@PathVariable Long id) {
         return toResponse(petService.getById(id));
     }
+
+    @GetMapping("/me")
+    public List<PetResponse> listMyPets(Authentication authentication) {
+        String authenticatedEmail = authentication.getName();
+        return petService.listPetsOfAuthenticatedUser(authenticatedEmail).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+    
 
     // ------------ M A P P E R ------------
 
