@@ -15,7 +15,12 @@ public class Organization {
     private String name;
 
     private String description;
+
+    // email de contato da organização
+    private String email;
+
     private String address;
+
     private String phone;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -23,6 +28,11 @@ public class Organization {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    // usuário dono / admin principal da organização
+    @ManyToOne
+    @JoinColumn(name = "admin_user_id")
+    private User admin;
 
     @PrePersist
     public void onCreate() {
@@ -36,7 +46,9 @@ public class Organization {
         this.updatedAt = OffsetDateTime.now();
     }
 
-    // ===== getters/setters =====
+    // ====================
+    // getters / setters
+    // ====================
 
     public Long getId() {
         return id;
@@ -56,6 +68,14 @@ public class Organization {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getAddress() {
@@ -80,5 +100,13 @@ public class Organization {
 
     public OffsetDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public User getAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(User admin) {
+        this.admin = admin;
     }
 }

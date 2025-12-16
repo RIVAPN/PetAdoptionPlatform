@@ -34,26 +34,27 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                // pets do usuario logado (precisa autenticar)
-                .requestMatchers(HttpMethod.GET, "/api/pets/me").authenticated()
-
                 // catálogo público (somente leitura)
                 .requestMatchers(HttpMethod.GET, "/api/pets/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/organizations/**").permitAll()
 
-                // ===== REGRAS PARA PETS =====
-                // Qualquer usuário autenticado pode criar/alterar/excluir pets.
-                // O PetService é quem garante:
-                //   - só cria em nome de si mesmo
-                //   - só o dono pode atualizar/excluir o próprio pet
+                // pets (já configurado antes)
                 .requestMatchers(HttpMethod.POST, "/api/pets/**")
                     .authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/pets/**")
-                    .authenticated()
+                    .hasAnyRole("TUTOR", "ORG_ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/pets/**")
-                    .authenticated()
+                    .hasAnyRole("TUTOR", "ORG_ADMIN")
 
-                // (futuro) – pedidos de adoção: só ADOPTER cria
+                // ORGANIZAÇÕES
+                .requestMatchers(HttpMethod.POST, "/api/organizations/**")
+                    .authenticated()       // qualquer usuário logado pode criar org
+                .requestMatchers(HttpMethod.PUT, "/api/organizations/**")
+                    .authenticated()       // precisa estar logado...
+                .requestMatchers(HttpMethod.DELETE, "/api/organizations/**")
+                    .authenticated()       // ...mas o service confere se é o admin
+
+                // (quando criarmos os pedidos de adoção)
                 .requestMatchers(HttpMethod.POST, "/api/adoptions/**")
                     .hasRole("ADOPTER")
 
